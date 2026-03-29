@@ -1,5 +1,6 @@
 # main.py
 import json
+import random
 from models import Player, Team
 import ds_engine
 
@@ -61,10 +62,23 @@ def main():
     teams = setup_teams()
     db = ds_engine.PlayerDatabase()
 
+    # Each CPU team has a unique scoring personality used during auto-picks.
+    # Weights reflect how much the team values points vs assists vs defense.
+    team_scorers = {
+        "Rim Rockers":     lambda p: p.points_avg * 2.0 + p.assists_avg * 0.5 + p.defense_rating * 1.0,
+        "Splash Brothers": lambda p: p.points_avg * 1.2 + p.assists_avg * 2.0 + p.defense_rating * 0.3,
+        "Paint Pounders":  lambda p: p.points_avg * 0.8 + p.assists_avg * 0.5 + p.defense_rating * 3.0,
+        "Net Ninjas":      lambda p: p.points_avg * 1.0 + p.assists_avg * 1.5 + p.defense_rating * 1.5,
+        "Hoop Dreams":     lambda p: p.points_avg * 3.0 + p.assists_avg * 0.3 + p.defense_rating * 0.2,
+        "Fast Breaks":     lambda p: p.points_avg * 1.0 + p.assists_avg * 2.5 + p.defense_rating * 0.5,
+    }
+
     # ── Pre-Game: Draft ──────────────────────────────────────────────────────
+    # Weighted shuffle: higher-FV players tend to appear earlier but aren't
+    # locked in place — sigma=8 gives meaningful variance across the pool.
+    all_players.sort(key=lambda p: p.fantasy_value + random.gauss(0, 8), reverse=True)
     print("\nStarting snake draft...")
-    all_players.sort(key=lambda p: p.fantasy_value, reverse=True)
-    ds_engine.run_snake_draft(teams, all_players, user_team=teams[0])
+    ds_engine.run_snake_draft(teams, all_players, user_team=teams[0], team_scorers=team_scorers)
 
     # Build waiver wire from undrafted players
     drafted_ids = {p.id for team in teams for p in team.roster}
@@ -178,6 +192,33 @@ def main():
         elif choice == "Q":
             print("Thanks for playing Terminal Hoops GM!")
             break
+
+    # ── End Screen (only shown after all weeks complete, not on Q) ────────────
+    if week > NUM_WEEKS:
+        ranked = standings.inorder()
+        champion = ranked[0]
+
+        all_rostered = [p for t in teams for p in t.roster]
+        mvp = max(all_rostered, key=lambda p: p.fantasy_value)
+        mvp_team = next(t for t in teams if mvp in t.roster)
+
+        print(f"\n{'═'*50}")
+        print(f"  FINAL STANDINGS — {NUM_WEEKS}-WEEK SEASON COMPLETE")
+        print(f"{'═'*50}")
+        for rank, team in enumerate(ranked, 1):
+            marker = " ← YOU" if team is user_team else ""
+            crown  = "🏆 " if rank == 1 else f"{rank:2}. "
+            print(f"  {crown}{team.name:<22} {team.wins:2}W – {team.losses:2}L{marker}")
+
+        print(f"\n  CHAMPION: {champion.name}")
+        if champion is user_team:
+            print("  You won the season! Great managing.")
+        else:
+            print(f"  Better luck next season.")
+
+        print(f"\n  MVP: {mvp.name} ({mvp_team.name})")
+        print(f"       PTS {mvp.points_avg:.1f}  AST {mvp.assists_avg:.1f}  DEF {mvp.defense_rating:.1f}")
+        print(f"{'═'*50}\n")
 
 
 if __name__ == "__main__":
