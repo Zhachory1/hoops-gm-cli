@@ -5,6 +5,7 @@ import ds_engine
 
 NUM_TEAMS = 7
 ROSTER_SIZE = 15
+NUM_WEEKS = 14
 
 
 def load_players() -> list[Player]:
@@ -26,6 +27,35 @@ def setup_teams() -> list[Team]:
     return teams
 
 
+def generate_schedule(teams: list[Team], num_weeks: int) -> list[list[tuple]]:
+    """
+    Round-robin schedule using the circle algorithm.
+    With an odd number of teams, one team gets a bye each week (None slot).
+    Returns a list of `num_weeks` rounds; each round is a list of (Team, Team) pairs.
+    Repeats the round-robin cycle if num_weeks exceeds the number of rounds.
+    """
+    pool = teams[:]
+    if len(pool) % 2 == 1:
+        pool.append(None)  # bye placeholder
+
+    n = len(pool)
+    fixed = pool[0]
+    rotating = pool[1:]
+    rounds = []
+
+    for _ in range(n - 1):
+        circle = [fixed] + rotating
+        pairs = [
+            (circle[i], circle[n - 1 - i])
+            for i in range(n // 2)
+            if circle[i] is not None and circle[n - 1 - i] is not None
+        ]
+        rounds.append(pairs)
+        rotating = [rotating[-1]] + rotating[:-1]  # rotate right by one
+
+    return [rounds[i % len(rounds)] for i in range(num_weeks)]
+
+
 def main():
     all_players = load_players()
     teams = setup_teams()
@@ -42,11 +72,13 @@ def main():
     for p in undrafted:
         wire.insert(p)
 
+    season_schedule = generate_schedule(teams, NUM_WEEKS)
+
+    # Build the graph from the actual scheduled matchups
     schedule = ds_engine.ScheduleGraph()
-    team_names = [t.name for t in teams]
-    for i in range(len(team_names)):
-        for j in range(i + 1, len(team_names)):
-            schedule.add_matchup(team_names[i], team_names[j])
+    for weekly_pairs in season_schedule:
+        for a, b in weekly_pairs:
+            schedule.add_matchup(a.name, b.name)
 
     week = 1
     standings = ds_engine.BST()
@@ -56,7 +88,7 @@ def main():
     user_team = teams[0]
 
     # ── Hub ──────────────────────────────────────────────────────────────────
-    while week <= 14:
+    while week <= NUM_WEEKS:
         print(f"\n{'='*40}")
         print(f"  TERMINAL HOOPS GM  |  Week {week}")
         print(f"{'='*40}")
@@ -124,11 +156,9 @@ def main():
                 print("Team not found.")
 
         elif choice == "6":
-            import random
-            shuffled = teams[:]
-            random.shuffle(shuffled)
-            matchups = [(shuffled[i], shuffled[i + 1]) for i in range(0, len(shuffled) - 1, 2)]
-            bye_team = shuffled[-1] if len(shuffled) % 2 == 1 else None
+            matchups = season_schedule[week - 1]
+            playing_names = {t.name for pair in matchups for t in pair}
+            bye_team = next((t for t in teams if t.name not in playing_names), None)
             print(f"\n── Week {week} Results ──")
             for a, b in matchups:
                 winner, score_a, score_b = ds_engine.simulate_matchup(a, b)
