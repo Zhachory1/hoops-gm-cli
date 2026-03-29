@@ -3,7 +3,7 @@ import json
 from models import Player, Team
 import ds_engine
 
-NUM_TEAMS = 4
+NUM_TEAMS = 7
 ROSTER_SIZE = 15
 
 
@@ -19,7 +19,8 @@ def setup_teams() -> list[Team]:
     print("Enter a name for YOUR team:")
     your_name = input("> ").strip() or "My Team"
     teams.append(Team(name=your_name))
-    cpu_names = ["Rim Rockers", "Splash Brothers", "Paint Pounders"]
+    cpu_names = ["Rim Rockers", "Splash Brothers", "Paint Pounders",
+                 "Net Ninjas", "Hoop Dreams", "Fast Breaks"]
     for name in cpu_names:
         teams.append(Team(name=name))
     return teams
@@ -124,8 +125,10 @@ def main():
 
         elif choice == "6":
             import random
-            matchups = [(teams[0], teams[1]), (teams[2], teams[3])]
-            random.shuffle(matchups)
+            shuffled = teams[:]
+            random.shuffle(shuffled)
+            matchups = [(shuffled[i], shuffled[i + 1]) for i in range(0, len(shuffled) - 1, 2)]
+            bye_team = shuffled[-1] if len(shuffled) % 2 == 1 else None
             print(f"\n── Week {week} Results ──")
             for a, b in matchups:
                 winner, score_a, score_b = ds_engine.simulate_matchup(a, b)
@@ -133,6 +136,8 @@ def main():
                 winner.wins += 1
                 loser.losses += 1
                 print(f"  {a.name} {score_a} – {score_b} {b.name}  ({winner.name} wins)")
+            if bye_team:
+                print(f"  {bye_team.name} — BYE")
             week += 1
             # Rebuild BST with updated win counts
             standings = ds_engine.BST()
