@@ -100,9 +100,9 @@ class Stack:
         raise NotImplementedError
 
 
-def run_snake_draft(teams: List[Team], available: List[Player]) -> None:
+def run_snake_draft(teams: List[Team], available: List[Player], user_team: Optional[Team] = None) -> None:
     """
-    Snake draft: round 1 picks team 1→4, round 2 picks 4→1, alternating.
+    Snake draft: round 1 picks team 1→N, round 2 picks N→1, alternating.
 
     STUDENT TASK: Implement this function using your Queue and Stack above.
     Requirements:
@@ -110,7 +110,8 @@ def run_snake_draft(teams: List[Team], available: List[Player]) -> None:
       - Reverse the Queue order on every even round (snake behavior)
       - Use a Stack to record each pick so the user can type 'undo'
       - Print top 15 available players each turn
-      - Prompt the player by number; CPU teams pick index 0 automatically
+      - user_team picks interactively; all other teams auto-pick index 0
+      - If user_team is None, all teams auto-pick (useful for testing)
     See tests/test_draft.py for integration tests.
     """
     # TODO: Implement snake draft here
