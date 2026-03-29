@@ -63,7 +63,8 @@ def main():
 
     # ── Pre-Game: Draft ──────────────────────────────────────────────────────
     print("\nStarting snake draft...")
-    ds_engine.run_snake_draft(teams, all_players)
+    all_players.sort(key=lambda p: p.fantasy_value, reverse=True)
+    ds_engine.run_snake_draft(teams, all_players, user_team=teams[0])
 
     # Build waiver wire from undrafted players
     drafted_ids = {p.id for team in teams for p in team.roster}
