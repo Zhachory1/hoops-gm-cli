@@ -19,21 +19,22 @@ class PlayerDatabase:
     """
 
     def __init__(self):
-        # TODO: Initialize your two hash-table dicts here
-        pass
+        # Initialize the two hash-table dictionaries
+        self.players_ids = {}
+        self.players_names = {}
 
     def load(self, player: Player) -> None:
-        # TODO: Insert the player into both dicts
-        raise NotImplementedError
+        # Insert the player into both dicts
+        self.players_ids[player.id] = player
+        self.players_names[player.name.lower()] = player
 
     def get_player_by_id(self, player_id: str) -> Optional[Player]:
-        # TODO: Return the Player with this id, or None if not found
-        raise NotImplementedError
+        # Return the Player with this id, or None if not found
+        return self.players_ids.get(player_id, None)
 
     def get_player_by_name(self, name: str) -> Optional[Player]:
-        # TODO: Return the Player with this name (case-insensitive), or None
-        raise NotImplementedError
-
+        # Return the Player with this name (case-insensitive), or None
+        return self.players_names.get(name.lower(), None)
 
 # ── Module 2: Draft Room ──────────────────────────────────────────────────────
 class Queue:
