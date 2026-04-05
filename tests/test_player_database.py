@@ -49,3 +49,12 @@ def test_load_all_players_all_retrievable():
     for p in players:
         assert db.get_player_by_id(p.id) is not None
         assert db.get_player_by_name(p.name) is not None
+
+if __name__ == "__main__":
+    test_get_by_id_returns_correct_player()
+    test_get_by_name_returns_correct_player()
+    test_missing_id_returns_none()
+    test_missing_name_returns_none()
+    test_load_all_players_all_retrievable()
+    
+    print("Successfully passed all tests")
