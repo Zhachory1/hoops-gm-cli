@@ -1,0 +1,7 @@
+[project]
+name = "hoops-gm-cli"
+version = "0.1.0"
+description = "A terminal-based fantasy basketball game used as a teaching tool for Data Structures & Algorithms. You manage a team through a snake draft, weekly matchups, and a 14-week season — all powered by DS&A implementations you write yourself."
+readme = "README.md"
+requires-python = ">=3.13.7"
+dependencies = []
