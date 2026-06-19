@@ -178,12 +178,21 @@ def _merge(left: List[Player], right: List[Player], key: str) -> List[Player]:
 
 
 # ── Module 5: League Standings ────────────────────────────────────────────────
+def _is_lower_standing(team: Team, other: Team) -> bool:
+    if team.wins != other.wins:
+        return team.wins < other.wins
+    if team.losses != other.losses:
+        return team.losses > other.losses
+    return team.name.lower() > other.name.lower()
+
+
 class BSTNode:
     """Single node in the BST. Stores a Team and left/right child pointers."""
 
     def __init__(self, team: Team):
-        # TODO: Store the team; set left and right to None
-        raise NotImplementedError
+        self.team = team
+        self.left: Optional['BSTNode'] = None
+        self.right: Optional['BSTNode'] = None
 
 
 class BST:
@@ -198,25 +207,32 @@ class BST:
     """
 
     def __init__(self):
-        # TODO: Initialize root to None
-        pass
+        self._root: Optional[BSTNode] = None
 
     def insert(self, team: Team) -> None:
-        # TODO: Insert team into the correct BST position by wins
-        raise NotImplementedError
+        self._root = self._insert(self._root, team)
 
     def _insert(self, node: Optional[BSTNode], team: Team) -> BSTNode:
-        # TODO: Recursive helper — return the (possibly new) node
-        raise NotImplementedError
+        if node is None:
+            return BSTNode(team)
+        if _is_lower_standing(team, node.team):
+            node.left = self._insert(node.left, team)
+        else:
+            node.right = self._insert(node.right, team)
+        return node
 
     def inorder(self) -> List[Team]:
-        """Return teams in descending win order (1st place first)."""
-        # TODO: Traverse right→node→left and collect teams
-        raise NotImplementedError
+        """Return teams in descending standings order (1st place first)."""
+        result: List[Team] = []
+        self._inorder(self._root, result)
+        return result
 
     def _inorder(self, node: Optional[BSTNode], result: List[Team]) -> None:
-        # TODO: Recursive helper for inorder traversal
-        raise NotImplementedError
+        if node is None:
+            return
+        self._inorder(node.right, result)
+        result.append(node.team)
+        self._inorder(node.left, result)
 
 
 # ── Module 6: Schedule Network ────────────────────────────────────────────────

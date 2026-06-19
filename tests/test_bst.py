@@ -60,3 +60,16 @@ def test_bst_rebuilt_after_wins_change():
         bst.insert(t)
     result = bst.inorder()
     assert result[0].name == "Alpha"
+
+
+def test_equal_wins_use_losses_then_name_tiebreakers():
+    teams = [Team("Zulu"), Team("Alpha"), Team("Beta")]
+    teams[0].wins, teams[0].losses = 10, 5
+    teams[1].wins, teams[1].losses = 10, 3
+    teams[2].wins, teams[2].losses = 10, 3
+
+    bst = BST()
+    for team in teams:
+        bst.insert(team)
+
+    assert [team.name for team in bst.inorder()] == ["Alpha", "Beta", "Zulu"]
