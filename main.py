@@ -1,4 +1,5 @@
 # main.py
+import argparse
 import json
 import random
 from models import Player, Team
@@ -7,6 +8,13 @@ import ds_engine
 NUM_TEAMS = 7
 ROSTER_SIZE = 15
 NUM_WEEKS = 14
+
+
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="Terminal Hoops GM")
+    parser.add_argument("--seed", type=int, default=None, help="random seed for reproducible seasons")
+    parser.add_argument("--weeks", type=int, default=NUM_WEEKS, help="number of weeks to simulate")
+    return parser.parse_args(argv)
 
 
 def load_players() -> list[Player]:
@@ -26,6 +34,20 @@ def setup_teams() -> list[Team]:
     for name in cpu_names:
         teams.append(Team(name=name))
     return teams
+
+
+def claim_waiver_player(user_team: Team, wire: ds_engine.MaxHeap, top: Player, drop_choice: str) -> bool:
+    if drop_choice.isdigit():
+        idx = int(drop_choice) - 1
+        if 0 <= idx < len(user_team.roster):
+            dropped = user_team.roster.pop(idx)
+            wire.insert(dropped)
+            user_team.roster.append(top)
+            print(f"Dropped {dropped.name}, added {top.name}.")
+            return True
+    wire.insert(top)
+    print("Invalid roster number; waiver claim cancelled.")
+    return False
 
 
 def generate_schedule(teams: list[Team], num_weeks: int) -> list[list[tuple]]:
@@ -57,7 +79,11 @@ def generate_schedule(teams: list[Team], num_weeks: int) -> list[list[tuple]]:
     return [rounds[i % len(rounds)] for i in range(num_weeks)]
 
 
-def main():
+def main(argv=None):
+    args = parse_args(argv)
+    if args.seed is not None:
+        random.seed(args.seed)
+
     all_players = load_players()
     teams = setup_teams()
     db = ds_engine.PlayerDatabase()
@@ -89,7 +115,7 @@ def main():
     for p in undrafted:
         wire.insert(p)
 
-    season_schedule = generate_schedule(teams, NUM_WEEKS)
+    season_schedule = generate_schedule(teams, args.weeks)
 
     # Build the graph from the actual scheduled matchups
     schedule = ds_engine.ScheduleGraph()
@@ -105,7 +131,7 @@ def main():
     user_team = teams[0]
 
     # ── Hub ──────────────────────────────────────────────────────────────────
-    while week <= NUM_WEEKS:
+    while week <= args.weeks:
         print(f"\n{'='*40}")
         print(f"  TERMINAL HOOPS GM  |  Week {week}")
         print(f"{'='*40}")
@@ -141,14 +167,7 @@ def main():
                 for i, p in enumerate(user_team.roster, 1):
                     print(f"  {i}. {p.name} (FV: {p.fantasy_value:.1f})")
                 drop_choice = input("> ").strip()
-                if drop_choice.isdigit():
-                    idx = int(drop_choice) - 1
-                    dropped = user_team.roster.pop(idx)
-                    wire.insert(dropped)
-                    user_team.roster.append(top)
-                    print(f"Dropped {dropped.name}, added {top.name}.")
-                else:
-                    wire.insert(top)  # put them back
+                claim_waiver_player(user_team, wire, top, drop_choice)
             else:
                 user_team.roster.append(top)
                 print(f"Added {top.name} to your roster!")
@@ -211,7 +230,7 @@ def main():
             break
 
     # ── End Screen (only shown after all weeks complete, not on Q) ────────────
-    if week > NUM_WEEKS:
+    if week > args.weeks:
         ranked = standings.inorder()
         champion = ranked[0]
 
@@ -220,7 +239,7 @@ def main():
         mvp_team = next(t for t in teams if mvp in t.roster)
 
         print(f"\n{'═'*50}")
-        print(f"  FINAL STANDINGS — {NUM_WEEKS}-WEEK SEASON COMPLETE")
+        print(f"  FINAL STANDINGS — {args.weeks}-WEEK SEASON COMPLETE")
         print(f"{'═'*50}")
         for rank, team in enumerate(ranked, 1):
             marker = " ← YOU" if team is user_team else ""
