@@ -61,6 +61,8 @@ def main():
     all_players = load_players()
     teams = setup_teams()
     db = ds_engine.PlayerDatabase()
+    for player in all_players:
+        db.load(player)
 
     # Each CPU team has a unique scoring personality used during auto-picks.
     # Weights reflect how much the team values points vs assists vs defense.
@@ -113,6 +115,7 @@ def main():
         print("[4] League Stat Leaders")
         print("[5] View Schedule Network")
         print("[6] Simulate Next Week")
+        print("[7] Search Player Database")
         print("[Q] Quit")
         choice = input("\n> ").strip().upper()
 
@@ -169,6 +172,20 @@ def main():
                 print(" -> ".join(path))
             else:
                 print("Team not found.")
+
+        elif choice == "7":
+            print("\nEnter a player name:")
+            player_name = input("> ").strip()
+            player = db.get_player_by_name(player_name)
+            if player:
+                rostered_by = next((t.name for t in teams if player in t.roster), "Waiver Wire")
+                print(
+                    f"  {player.name} — PTS:{player.points_avg:.1f} "
+                    f"AST:{player.assists_avg:.1f} DEF:{player.defense_rating:.1f} "
+                    f"FV:{player.fantasy_value:.1f} ({rostered_by})"
+                )
+            else:
+                print("Player not found.")
 
         elif choice == "6":
             matchups = season_schedule[week - 1]
