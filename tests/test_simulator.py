@@ -1,43 +1,74 @@
-# tests/test_simulator.py
-import sys, os
-sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+import random
 
-from models import Player, Team
+import ds_engine
 from ds_engine import simulate_matchup
+from models import Player, Team
 
 
-def make_team(name: str, pts: float, ast: float, dfn: float) -> Team:
-    t = Team(name)
-    for i in range(15):
-        t.roster.append(Player(f"{name}_{i}", f"Player {i}", pts, ast, dfn))
-    return t
+def make_team(name: str, players: list[Player] | None = None) -> Team:
+    team = Team(name)
+    team.roster.extend(players or [])
+    return team
 
 
-def test_returns_winner_and_scores():
-    a = make_team("Alpha", 25.0, 6.0, 5.0)
-    b = make_team("Beta",  20.0, 4.0, 4.0)
-    winner, score_a, score_b = simulate_matchup(a, b)
-    assert winner in (a, b)
-    assert isinstance(score_a, (int, float))
-    assert isinstance(score_b, (int, float))
-    assert score_a != score_b  # ties shouldn't happen with gauss
+def player(name: str, pts: float, ast: float, defense: float) -> Player:
+    return Player(name.lower().replace(" ", "_"), name, pts, ast, defense)
 
 
-def test_stronger_team_wins_more_often():
-    """Over 100 simulations, the stronger team should win ~55%+ of the time."""
-    strong = make_team("Strong", 30.0, 8.0, 7.0)
-    weak   = make_team("Weak",   10.0, 2.0, 2.0)
-    strong_wins = 0
-    for _ in range(100):
-        winner, _, _ = simulate_matchup(strong, weak)
-        if winner == strong:
-            strong_wins += 1
-    assert strong_wins >= 55, f"Expected strong team to win more often, got {strong_wins}/100"
+def test_non_empty_rosters_return_integer_scores_and_winner(monkeypatch):
+    monkeypatch.setattr(ds_engine.random, "gauss", lambda mu, sigma: mu)
+    alpha = make_team("Alpha", [player("Alpha One", 20.0, 4.0, 2.0)])
+    beta = make_team("Beta", [player("Beta One", 10.0, 1.0, 1.0)])
+
+    winner, score_alpha, score_beta = simulate_matchup(alpha, beta)
+
+    assert winner == alpha
+    assert score_alpha == 20
+    assert score_beta == 10
+    assert isinstance(score_alpha, int)
+    assert isinstance(score_beta, int)
 
 
-def test_scores_are_positive():
-    a = make_team("A", 20.0, 5.0, 5.0)
-    b = make_team("B", 20.0, 5.0, 5.0)
-    _, score_a, score_b = simulate_matchup(a, b)
-    assert score_a > 0
-    assert score_b > 0
+def test_empty_rosters_tie_with_zero_scores():
+    alpha = make_team("Alpha")
+    beta = make_team("Beta")
+
+    winner, score_alpha, score_beta = simulate_matchup(alpha, beta)
+
+    assert winner == alpha
+    assert score_alpha == 0
+    assert score_beta == 0
+
+
+def test_winner_selection_uses_higher_score(monkeypatch):
+    monkeypatch.setattr(ds_engine.random, "gauss", lambda mu, sigma: mu)
+    alpha = make_team("Alpha", [player("Alpha One", 5.0, 0.0, 0.0)])
+    beta = make_team("Beta", [player("Beta One", 15.0, 0.0, 0.0)])
+
+    winner, score_alpha, score_beta = simulate_matchup(alpha, beta)
+
+    assert winner == beta
+    assert score_beta > score_alpha
+
+
+def test_negative_adjusted_scores_are_floored_at_zero(monkeypatch):
+    monkeypatch.setattr(ds_engine.random, "gauss", lambda mu, sigma: -4.2)
+    alpha = make_team("Alpha", [player("Alpha One", 1.0, 0.0, 0.0)])
+    beta = make_team("Beta", [player("Beta One", 1.0, 0.0, 0.0)])
+
+    _, score_alpha, score_beta = simulate_matchup(alpha, beta)
+
+    assert score_alpha == 0
+    assert score_beta == 0
+
+
+def test_seeded_random_is_deterministic():
+    alpha = make_team("Alpha", [player("Alpha One", 20.0, 4.0, 2.0)])
+    beta = make_team("Beta", [player("Beta One", 10.0, 1.0, 1.0)])
+
+    random.seed(42)
+    first = simulate_matchup(alpha, beta)
+    random.seed(42)
+    second = simulate_matchup(alpha, beta)
+
+    assert (first[0].name, first[1], first[2]) == (second[0].name, second[1], second[2])
