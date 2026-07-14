@@ -12,6 +12,13 @@ python3 main.py
 
 You'll be prompted to name your team, draft your roster, then manage your season week by week.
 
+Save league state and export draft/results summaries:
+
+```bash
+python3 main.py --save exports/league-state.json
+python3 main.py --export-json exports/summary.json --export-csv exports/summary.csv
+```
+
 ---
 
 ## Your Job: Implement `ds_engine.py`
