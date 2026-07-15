@@ -292,5 +292,16 @@ def simulate_matchup(team_a: Team, team_b: Team) -> tuple:
     Return (winner: Team, score_a: int, score_b: int).
     See tests/test_simulator.py for the expected interface.
     """
-    # TODO: Compute team scores, determine winner, return tuple
-    raise NotImplementedError
+    def team_score(team: Team, opponent: Team) -> int:
+        assist_bonus = sum(player.assists_avg for player in team.roster) * 0.1
+        defense_penalty = sum(player.defense_rating for player in opponent.roster) * 0.05
+        total = 0.0
+        for player in team.roster:
+            mu = player.points_avg + assist_bonus - defense_penalty
+            total += max(0.0, random.gauss(mu, 3.0))
+        return int(round(total))
+
+    score_a = team_score(team_a, team_b)
+    score_b = team_score(team_b, team_a)
+    winner = team_a if score_a >= score_b else team_b
+    return winner, score_a, score_b

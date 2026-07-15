@@ -1,7 +1,9 @@
 # main.py
 import argparse
+import csv
 import json
 import random
+from pathlib import Path
 from models import Player, Team
 import ds_engine
 
@@ -14,6 +16,9 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Terminal Hoops GM")
     parser.add_argument("--seed", type=int, default=None, help="random seed for reproducible seasons")
     parser.add_argument("--weeks", type=int, default=NUM_WEEKS, help="number of weeks to simulate")
+    parser.add_argument("--save", default=None, help="write league state JSON to this path")
+    parser.add_argument("--export-json", default=None, help="write draft/results summary JSON to this path")
+    parser.add_argument("--export-csv", default=None, help="write draft/results summary CSV to this path")
     return parser.parse_args(argv)
 
 
@@ -48,6 +53,75 @@ def claim_waiver_player(user_team: Team, wire: ds_engine.MaxHeap, top: Player, d
     wire.insert(top)
     print("Invalid roster number; waiver claim cancelled.")
     return False
+
+
+def player_to_dict(player: Player) -> dict:
+    return {
+        "id": player.id,
+        "name": player.name,
+        "points_avg": player.points_avg,
+        "assists_avg": player.assists_avg,
+        "defense_rating": player.defense_rating,
+        "fantasy_value": player.fantasy_value,
+    }
+
+
+def team_to_dict(team: Team) -> dict:
+    return {
+        "name": team.name,
+        "wins": team.wins,
+        "losses": team.losses,
+        "roster": [player_to_dict(player) for player in team.roster],
+    }
+
+
+def league_state(teams: list[Team], week: int, total_weeks: int, user_team: Team, results: list[dict]) -> dict:
+    return {
+        "week": week,
+        "total_weeks": total_weeks,
+        "user_team": user_team.name,
+        "teams": [team_to_dict(team) for team in teams],
+        "results": results,
+    }
+
+
+def write_json(path: str, payload: dict) -> None:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(payload, indent=2) + "\n")
+
+
+def save_league_state(path: str, teams: list[Team], week: int, total_weeks: int, user_team: Team, results: list[dict]) -> None:
+    write_json(path, league_state(teams, week, total_weeks, user_team, results))
+
+
+def export_summary_json(path: str, teams: list[Team], results: list[dict], user_team: Team) -> None:
+    write_json(path, {
+        "user_team": user_team.name,
+        "draft": [team_to_dict(team) for team in teams],
+        "results": results,
+    })
+
+
+def export_summary_csv(path: str, teams: list[Team], results: list[dict]) -> None:
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open("w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["section", "team", "player", "week", "opponent", "score", "opponent_score", "winner"])
+        writer.writeheader()
+        for team in teams:
+            for player in team.roster:
+                writer.writerow({"section": "draft", "team": team.name, "player": player.name})
+        for result in results:
+            writer.writerow({
+                "section": "result",
+                "team": result["team_a"],
+                "week": result["week"],
+                "opponent": result["team_b"],
+                "score": result["score_a"],
+                "opponent_score": result["score_b"],
+                "winner": result["winner"],
+            })
 
 
 def generate_schedule(teams: list[Team], num_weeks: int) -> list[list[tuple]]:
@@ -129,6 +203,7 @@ def main(argv=None):
         standings.insert(t)
 
     user_team = teams[0]
+    results_log = []
 
     # ── Hub ──────────────────────────────────────────────────────────────────
     while week <= args.weeks:
@@ -142,6 +217,8 @@ def main(argv=None):
         print("[5] View Schedule Network")
         print("[6] Simulate Next Week")
         print("[7] Search Player Database")
+        if args.save:
+            print("[S] Save Season")
         print("[Q] Quit")
         choice = input("\n> ").strip().upper()
 
@@ -216,6 +293,14 @@ def main(argv=None):
                 loser = b if winner == a else a
                 winner.wins += 1
                 loser.losses += 1
+                results_log.append({
+                    "week": week,
+                    "team_a": a.name,
+                    "team_b": b.name,
+                    "score_a": score_a,
+                    "score_b": score_b,
+                    "winner": winner.name,
+                })
                 print(f"  {a.name} {score_a} – {score_b} {b.name}  ({winner.name} wins)")
             if bye_team:
                 print(f"  {bye_team.name} — BYE")
@@ -224,6 +309,10 @@ def main(argv=None):
             standings = ds_engine.BST()
             for t in teams:
                 standings.insert(t)
+
+        elif choice == "S" and args.save:
+            save_league_state(args.save, teams, week, args.weeks, user_team, results_log)
+            print(f"Saved league state to {args.save}")
 
         elif choice == "Q":
             print("Thanks for playing Terminal Hoops GM!")
@@ -255,6 +344,16 @@ def main(argv=None):
         print(f"\n  MVP: {mvp.name} ({mvp_team.name})")
         print(f"       PTS {mvp.points_avg:.1f}  AST {mvp.assists_avg:.1f}  DEF {mvp.defense_rating:.1f}")
         print(f"{'═'*50}\n")
+
+    if args.save:
+        save_league_state(args.save, teams, week, args.weeks, user_team, results_log)
+        print(f"Saved league state to {args.save}")
+    if args.export_json:
+        export_summary_json(args.export_json, teams, results_log, user_team)
+        print(f"Exported summary JSON to {args.export_json}")
+    if args.export_csv:
+        export_summary_csv(args.export_csv, teams, results_log)
+        print(f"Exported summary CSV to {args.export_csv}")
 
 
 if __name__ == "__main__":
