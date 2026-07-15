@@ -6,6 +6,14 @@ This repository's default branch is the teaching scaffold plus incremental compl
 
 ---
 
+## Branch Status
+
+- `main` is the student-facing scaffold plus incremental completed modules.
+- `solution` is the reference branch for the fully implemented game.
+- The test suite documents expected behavior for each data structure module.
+
+---
+
 ## Setup
 
 Requirements:
@@ -73,9 +81,9 @@ Starting snake draft...
 
 ## Your Job: Implement `ds_engine.py`
 
-All game logic lives in `ds_engine.py`. Every class and function is stubbed out with a `TODO` and raises `NotImplementedError`. **Your task is to replace each stub with a working implementation.**
+All game logic lives in `ds_engine.py`. Some modules are already implemented as reference examples; remaining exercise scaffolds raise `NotImplementedError` until you complete them.
 
-The game will not run until you implement the modules. Use the test suite to check your work as you go.
+The full game needs every module implemented. Use the focused test suite to check your work as you go.
 
 ### Module 1 — Hash Table: `PlayerDatabase`
 

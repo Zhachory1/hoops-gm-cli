@@ -1,7 +1,7 @@
 # ds_engine.py
-# All Data Structures & Algorithms implementations live here.
-# Each class/function below is a stub — YOUR job is to implement it.
-# Run the tests in tests/ to verify your implementations are correct.
+# Data Structures & Algorithms implementations and exercise scaffolds live here.
+# Some modules are complete reference examples; remaining exercise scaffolds raise
+# NotImplementedError until implemented. Run the focused tests in tests/ as you go.
 
 import random
 from models import Player, Team
@@ -11,11 +11,10 @@ from typing import List, Optional
 # ── Module 1: Hash Table ──────────────────────────────────────────────────────
 class PlayerDatabase:
     """
-    O(1) player lookup by ID or name.
+    O(1) player lookup by ID or case-insensitive name.
 
-    STUDENT TASK: Implement this class using two dictionaries as your
-    hash tables — one keyed by player ID, one keyed by player name.
-    See tests/test_player_database.py for the expected interface.
+    Uses two dictionaries as hash tables: one keyed by player ID, one keyed by
+    lowercase player name. See tests/test_player_database.py for coverage.
     """
 
     def __init__(self):
@@ -39,11 +38,10 @@ class PlayerDatabase:
 # ── Module 2: Draft Room ──────────────────────────────────────────────────────
 class Queue:
     """
-    FIFO queue for managing draft turn order.
+    FIFO queue exercise scaffold for managing draft turn order.
 
-    STUDENT TASK: Implement using a Python list as internal storage.
-    enqueue adds to the back; dequeue removes from the front.
-    See tests/test_draft.py for the expected interface.
+    Expected behavior: enqueue adds to the back, dequeue removes from the front,
+    and empty dequeues return None. See tests/test_draft.py for coverage.
     """
 
     def __init__(self):
@@ -73,11 +71,10 @@ class Queue:
 
 class Stack:
     """
-    LIFO stack for draft undo history.
+    LIFO stack exercise scaffold for draft undo history.
 
-    STUDENT TASK: Implement using a Python list as internal storage.
-    push and pop both operate on the same end.
-    See tests/test_draft.py for the expected interface.
+    Expected behavior: push and pop operate on the same end, peek returns the
+    current top item without removal. See tests/test_draft.py for coverage.
     """
 
     def __init__(self):
@@ -105,7 +102,7 @@ def run_snake_draft(teams: List[Team], available: List[Player], user_team: Optio
     """
     Snake draft: round 1 picks team 1→N, round 2 picks N→1, alternating.
 
-    STUDENT TASK: Implement this function using your Queue and Stack above.
+    Exercise scaffold expected to use Queue and Stack above.
     Requirements:
       - Use a Queue to manage the current round's pick order
       - Reverse the Queue order on every even round (snake behavior)
@@ -122,9 +119,9 @@ def run_snake_draft(teams: List[Team], available: List[Player], user_team: Optio
 # ── Module 3: Waiver Wire ─────────────────────────────────────────────────────
 class MaxHeap:
     """
-    Array-backed binary max-heap ordered by Player.fantasy_value.
+    Array-backed binary max-heap exercise scaffold ordered by Player.fantasy_value.
 
-    STUDENT TASK: Implement using a list with sift-up and sift-down.
+    Expected implementation uses a list with sift-up and sift-down.
     Index math:
       parent(i)      = (i - 1) // 2
       left_child(i)  = 2*i + 1
@@ -156,10 +153,9 @@ class MaxHeap:
 # ── Module 4: Stat Leaderboards ───────────────────────────────────────────────
 def merge_sort(players: List[Player], key: str) -> List[Player]:
     """
-    Recursive merge sort returning players in DESCENDING order by `key`.
+    Recursive merge sort exercise scaffold returning players in DESCENDING order by `key`.
 
-    STUDENT TASK: Implement a recursive O(n log n) merge sort.
-    Must NOT mutate the input list.
+    Expected implementation is O(n log n) and must NOT mutate the input list.
     `key` is a Player attribute name (e.g. 'points_avg', 'assists_avg').
     See tests/test_sort.py for the expected interface.
     """
@@ -169,9 +165,7 @@ def merge_sort(players: List[Player], key: str) -> List[Player]:
 
 def _merge(left: List[Player], right: List[Player], key: str) -> List[Player]:
     """
-    Merge two sorted (descending) lists into one sorted (descending) list.
-
-    STUDENT TASK: Implement the merge step used by merge_sort.
+    Merge-step exercise scaffold for two sorted descending lists.
     """
     # TODO: Two-pointer merge — pick the larger value first
     raise NotImplementedError
@@ -197,13 +191,12 @@ class BSTNode:
 
 class BST:
     """
-    Binary Search Tree ordered by Team.wins.
-    Left subtree  → fewer wins than parent
-    Right subtree → more wins than parent
-    In-order traversal right→left gives descending win order.
+    Binary Search Tree ordered by league standings.
+    Left subtree  → lower standing than parent
+    Right subtree → higher standing than parent
+    In-order traversal right→left gives descending standings order.
 
-    STUDENT TASK: Implement insert and inorder traversal.
-    See tests/test_bst.py for the expected interface.
+    Ties break by fewer losses, then team name. See tests/test_bst.py for coverage.
     """
 
     def __init__(self):
@@ -238,10 +231,11 @@ class BST:
 # ── Module 6: Schedule Network ────────────────────────────────────────────────
 class ScheduleGraph:
     """
-    Undirected adjacency-list graph. Nodes = team names, edges = matchups.
+    Undirected adjacency-list graph exercise scaffold.
 
-    STUDENT TASK: Implement BFS (shortest path) and DFS (full road trip).
-    See tests/test_graph.py for the expected interface.
+    Nodes are team names and edges are scheduled matchups. Expected behavior
+    includes BFS shortest paths and recursive DFS reachability.
+    See tests/test_graph.py for coverage.
     """
 
     def __init__(self):
@@ -261,8 +255,8 @@ class ScheduleGraph:
         Return shortest path from start to end as a list of team names.
         Return [] if unreachable. Return [start] if start == end.
 
-        STUDENT TASK: Use your Queue for the frontier. Track visited nodes
-        to avoid cycles.
+        Expected implementation uses Queue for the frontier and tracks visited
+        nodes to avoid cycles.
         """
         # TODO: BFS with path tracking
         raise NotImplementedError
@@ -272,7 +266,7 @@ class ScheduleGraph:
         Return all nodes reachable from start via depth-first traversal.
         No duplicates.
 
-        STUDENT TASK: Implement recursively using a visited set.
+        Expected implementation is recursive and uses a visited set.
         """
         # TODO: Kick off recursive DFS
         raise NotImplementedError
@@ -285,9 +279,9 @@ class ScheduleGraph:
 # ── Module 7: Game Simulator ──────────────────────────────────────────────────
 def simulate_matchup(team_a: Team, team_b: Team) -> tuple:
     """
-    Stochastic matchup simulator using Gaussian (normal) distribution.
+    Stochastic matchup simulator exercise scaffold using Gaussian distribution.
 
-    STUDENT TASK: For each player, compute an adjusted score using
+    Expected behavior: for each player, compute an adjusted score using
     random.gauss(mu, sigma) where:
       mu = player.points_avg + assist_bonus - defense_penalty
       assist_bonus    = team's total assists_avg * 0.1
