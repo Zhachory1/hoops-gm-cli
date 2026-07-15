@@ -2,12 +2,28 @@
 
 A terminal-based fantasy basketball game used as a teaching tool for Data Structures & Algorithms. You manage a team through a snake draft, weekly matchups, and a 14-week season — all powered by DS&A implementations you write yourself.
 
+This repository's default branch is the teaching scaffold plus incremental completed modules. Use the `solution` branch when you want a full reference implementation instead of student exercises.
+
 ---
 
-## Quickstart
+## Setup
+
+Requirements:
+- Python 3.13+
+- No third-party runtime dependencies
+
+Clone and run from the repository root so `data/players.json` is available:
 
 ```bash
+git clone https://github.com/Zhachory1/hoops-gm-cli.git
+cd hoops-gm-cli
 python3 main.py
+```
+
+Optional deterministic season:
+
+```bash
+python3 main.py --seed 42 --weeks 14
 ```
 
 You'll be prompted to name your team, draft your roster, then manage your season week by week.
@@ -17,6 +33,40 @@ Save league state and export draft/results summaries:
 ```bash
 python3 main.py --save exports/league-state.json
 python3 main.py --export-json exports/summary.json --export-csv exports/summary.csv
+```
+
+---
+
+## Gameplay Loop
+
+1. Name your team.
+2. Draft a 15-player roster in a snake draft against six CPU teams.
+3. Use the weekly hub to view your roster, standings, waiver wire, stat leaders, schedule graph, or player search.
+4. Simulate each week to update wins and losses.
+5. Finish the season to see final standings, champion, and MVP.
+
+Example session:
+
+```text
+$ python3 main.py --seed 7 --weeks 2
+=== TERMINAL HOOPS GM ===
+Enter a name for YOUR team:
+> Seattle Towers
+
+Starting snake draft...
+
+========================================
+  TERMINAL HOOPS GM  |  Week 1
+========================================
+[1] View Roster & Stats
+[2] View League Standings
+[3] Waiver Wire
+[4] League Stat Leaders
+[5] View Schedule Network
+[6] Simulate Next Week
+[7] Search Player Database
+[Q] Quit
+> 6
 ```
 
 ---
@@ -155,7 +205,7 @@ Run all tests:
 python3 -m pytest tests/
 ```
 
-Run a specific module:
+Run focused module tests while implementing one data structure at a time:
 ```bash
 python3 -m pytest tests/test_player_database.py  # Module 1
 python3 -m pytest tests/test_draft.py            # Module 2
@@ -164,9 +214,10 @@ python3 -m pytest tests/test_sort.py             # Module 4
 python3 -m pytest tests/test_bst.py              # Module 5
 python3 -m pytest tests/test_graph.py            # Module 6
 python3 -m pytest tests/test_simulator.py        # Module 7
+python3 -m pytest tests/test_main_cli.py         # CLI helpers
 ```
 
-A fully correct implementation passes all 38 tests.
+A fully correct implementation should pass the entire tracked test suite.
 
 ---
 
